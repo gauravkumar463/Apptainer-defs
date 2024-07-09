@@ -1,0 +1,36 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%environment
+    export PATH=/usr/mpi/latest/bin:$PATH
+    export MPI_ROOT=/usr/mpi/latest
+    . /usr/local/OpenFOAM/OpenFOAM-v2312/etc/bashrc -f
+
+%files
+    openfoam /usr/local/
+    ThirdParty-common /usr/local/
+%post
+    apt update
+    apt install -y build-essential autoconf autotools-dev cmake gawk gnuplot
+    apt install -y flex libfl-dev libreadline-dev zlib1g-dev libgmp-dev libmpfr-dev libmpc-dev libscotch-dev libptscotch-dev libmetis-dev 
+    apt install -y wget git hwloc libpmi2-0 libpmi2-0-dev vim
+    apt clean
+    rm -rf /var/lib/apt/lists/*
+
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c45ede0-623c-4c8e-9e09-bed27d70fa33/l_mpi_oneapi_p_2021.11.0.49513_offline.sh
+    chmod a+x ./l_mpi_oneapi_p_2021.11.0.49513_offline.sh
+    ./l_mpi_oneapi_p_2021.11.0.49513_offline.sh -a -s --eula accept --install-dir /usr
+	
+    export PATH=/usr/mpi/latest/bin:$PATH
+    export MPI_ROOT=/usr/mpi/latest
+
+    mkdir -p /usr/local/OpenFOAM
+    cd /usr/local/OpenFOAM
+    mv /usr/local/openfoam ./OpenFOAM-v2312
+    mv /usr/local/ThirdParty-common ./ThirdParty-v2312
+
+    cd OpenFOAM-v2312
+
+    . etc/bashrc -f
+    ./Allwmake -j
+
