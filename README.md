@@ -24,4 +24,4 @@ Run the following command if you see this error:
 
 `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`
 
-# More usage with gpus demonstrated in https://github.com/gauravkumar463/rhoLDFSSFoam_gpu.git
+### More usage with gpus demonstrated in https://github.com/gauravkumar463/rhoLDFSSFoam_gpu.git
