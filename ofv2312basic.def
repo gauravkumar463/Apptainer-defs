@@ -10,6 +10,7 @@ From: ubuntu:22.04
     openfoam /usr/local/
     ThirdParty-common /usr/local/
 %post
+    export DEBIAN_FRONTEND=noninteractive
     apt update
     apt install -y build-essential autoconf autotools-dev cmake gawk gnuplot
     apt install -y flex libfl-dev libreadline-dev zlib1g-dev libgmp-dev libmpfr-dev libmpc-dev libscotch-dev libptscotch-dev libmetis-dev 
