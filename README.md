@@ -8,14 +8,14 @@ You need to have a local copy of openfoam and ThirdParty to build ofv2312basic.d
 
 Use the following command to build the container:
 
-apptainer build \<filename\>.sif \<filename\>.def
+`apptainer build \<filename\>.sif \<filename\>.def`
 
 Use the following command to run the container:
 
-apptainer run \<filename\>.sif sh -c 'mpirun -n 4 icoFoam -parallel'    or,
-apptainer exec \<filename\>.sif sh -c 'mpirun -n 4 icoFoam -parallel'
+`apptainer run \<filename\>.sif sh -c 'mpirun -n 4 icoFoam -parallel'`    or, <br/>
+`apptainer exec \<filename\>.sif sh -c 'mpirun -n 4 icoFoam -parallel'`
 
-apptainer shell \<filename\>.sif   #to directly shell into the container
+`apptainer shell \<filename\>.sif`   #to directly shell into the container
 
 # Build debug
 Run the following command if you see this error:
