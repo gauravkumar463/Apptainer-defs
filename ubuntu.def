@@ -1,0 +1,39 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/nvhpc:25.1-devel-cuda_multi-ubuntu22.04
+
+%environment
+   
+    export NVHPC_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1
+    export HPCX_HOME=$NVHPC_ROOT/comm_libs/12.6/hpcx/latest
+
+%files
+
+%post -c /bin/bash
+    export DEBIAN_FRONTEND=noninteractive
+    
+    export NVHPC_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1
+    export HPCX_HOME=$NVHPC_ROOT/comm_libs/12.6/hpcx/latest
+    source $HPCX_HOME/hpcx-init.sh
+    hpcx_load
+
+    apt update
+    apt install -y python3 libcgal-dev
+    apt clean
+    rm -rf /var/lib/apt/lists/*    
+	
+	
+%runscript
+    #!/bin/bash
+
+    export NVHPC_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1
+    export HPCX_HOME=$NVHPC_ROOT/comm_libs/12.6/hpcx/latest
+
+    # 1. Source the initialization script
+    source $HPCX_HOME/hpcx-init.sh
+
+    # 2. Call the function to load the MPI environment
+    hpcx_load
+
+    # 3. Execute the user command (e.g., your AMReX binary)
+    # "$@" passes all arguments from 'apptainer run <image> <args>'
+    exec "$@"

@@ -1,0 +1,30 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%environment
+   
+%files
+
+%post -c /bin/bash
+    export DEBIAN_FRONTEND=noninteractive
+    apt update
+    apt install -y python3 wget curl gnupg2
+
+    # cd /usr/local
+    # wget https://download.opensuse.org/repositories/science:/dlr/xUbuntu_20.04/all/tigl3_3.2.3-1_all.deb
+    # dpkg -i tigl3_3.2.3-1_all.deb
+    
+    echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_20.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
+    curl -fsSL https://download.opensuse.org/repositories/science:dlr/xUbuntu_20.04/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/science_dlr.gpg > /dev/null
+    apt update
+    apt install -y tigl3
+
+    apt clean
+    rm -rf /var/lib/apt/lists/*    
+	
+	
+%runscript
+    #!/bin/bash
+
+    # "$@" passes all arguments from 'apptainer run <image> <args>'
+    exec "$@"

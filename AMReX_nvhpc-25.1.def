@@ -1,0 +1,124 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/nvhpc:25.1-devel-cuda_multi-ubuntu22.04
+
+%environment
+   
+    export NVHPC_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1
+    export HPCX_HOME=$NVHPC_ROOT/comm_libs/12.6/hpcx/latest
+
+    export AMREX_HOME=/usr/local/amrex
+    export AMREX_HYDRO_HOME=/usr/local/AMReX-Hydro
+    export PATH=/usr/local/amrex/install/bin:$PATH
+
+%files
+
+%post -c /bin/bash
+    export DEBIAN_FRONTEND=noninteractive
+    
+    export NVHPC_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1
+    export HPCX_HOME=$NVHPC_ROOT/comm_libs/12.6/hpcx/latest
+    source $HPCX_HOME/hpcx-init.sh
+    hpcx_load
+
+    apt update
+    apt install -y python3 libcgal-dev
+    apt clean
+    rm -rf /var/lib/apt/lists/*    
+
+    cd /usr/local
+ 
+    # Clone AMReX
+	git clone https://github.com/AMReX-Codes/amrex.git
+	cd amrex
+	mkdir build && cd build
+	
+	cmake .. \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DAMReX_GPU_BACKEND=CUDA \
+		-DAMReX_DIFFERENT_COMPILER=ON \
+		-DAMReX_CUDA_ARCH=80 \
+		-DAMReX_MPI=ON \
+		-DAMReX_OMP=OFF \
+		-DAMReX_FASTMATH=ON \
+		-DAMReX_EB=ON \
+		-DAMReX_PLOTFILE_TOOLS=ON \
+		-DAMReX_PARTICLES=ON \
+		-DAMReX_ASSERTIONS=ON \
+		-DAMReX_TINY_PROFILE=ON \
+        	-DAMReX_PIC=ON \
+		-DCMAKE_INSTALL_PREFIX=$(pwd)/../install
+		
+	make -j && make install
+
+	cd /usr/local
+	
+	# Install hydroflow
+	git clone https://github.com/AMReX-Fluids/AMReX-Hydro.git
+	cd AMReX-Hydro
+	mkdir build && cd build
+
+	cmake .. \
+		-DCMAKE_BUILD_TYPE=Release \
+  		-DAMReX_DIR=$(pwd)/../../amrex/install/lib/cmake/AMReX \
+		-DHYDRO_GPU_BACKEND=CUDA \
+  		-DCMAKE_INSTALL_PREFIX=$(pwd)/../install
+  		
+  	make -j && make install
+	cd ../..
+
+	# Install PEGTL
+	git clone --branch 2.8.3 https://github.com/taocpp/PEGTL.git
+	cd PEGTL
+
+	mkdir build && cd build
+	cmake .. \
+	-DCMAKE_INSTALL_PREFIX=$(pwd)/../install
+
+	make -j  && make install
+	cd ../..
+
+	# Install CSG-EB
+	git clone https://mfix.netl.doe.gov/gitlab/jmusser/csg-eb.git
+	cd csg-eb
+	mkdir build && cd build
+	
+	cmake .. \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DBUILD_TESTING=OFF \
+	-DCMAKE_INSTALL_PREFIX=$(pwd)/../install \
+	-DCMAKE_PREFIX_PATH=/usr/local/PEGTL/install
+
+	make -j && make install
+	cd ../..
+
+	# Install IncFlo
+	git clone https://github.com/AMReX-Fluids/incflo.git
+	cd incflo
+	
+	cd test_3d
+	make -j TINY_PROFILE=TRUE USE_CSG=TRUE USE_MPI=TRUE USE_CUDA=TRUE CUDA_ARCH=80 DEBUG=FALSE CSGEB_HOME=/usr/local/csg-eb/install
+	mv *.ex /usr/local/bin/
+	
+	cd ../test_2d
+	make -j TINY_PROFILE=TRUE USE_CSG=TRUE USE_MPI=TRUE USE_CUDA=TRUE CUDA_ARCH=80 DEBUG=FALSE CSGEB_HOME=/usr/local/csg-eb/install
+	mv *.ex /usr/local/bin/
+	
+%runscript
+    #!/bin/bash
+
+    export NVHPC_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1
+    export HPCX_HOME=$NVHPC_ROOT/comm_libs/12.6/hpcx/latest
+
+    export AMREX_HOME=/usr/local/amrex
+    export AMREX_HYDRO_HOME=/usr/local/AMReX-Hydro
+    export PATH=/usr/local/amrex/install/bin:$PATH
+
+    # 1. Source the initialization script
+    source $HPCX_HOME/hpcx-init.sh
+
+    # 2. Call the function to load the MPI environment
+    hpcx_load
+
+    # 3. Execute the user command (e.g., your AMReX binary)
+    # "$@" passes all arguments from 'apptainer run <image> <args>'
+    exec "$@"
